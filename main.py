@@ -1,10 +1,8 @@
 import sys
 import json
 import csv
+from confluent_kafka import Consumer, KafkaError
 
-##
-# Convert to string keeping encoding in mind...
-##
 def to_string(s):
     try:
         return str(s)
@@ -63,6 +61,26 @@ if __name__ == "__main__":
         print ("\nUsage: python json_to_csv.py <node_name> <json_in_file_path> <csv_out_file_path>\n")
     else:
         #Reading arguments
+        purple_air_consumer = Consumer({
+            'bootstrap.servers': 'sckafka1.simcenter.utc.edu:9092',
+            'group.id': 'purple_air_to_csv',
+            'auto.offset.reset': 'earliest'
+        })
+
+        purple_air_consumer.subscribe(['mytopic'])
+
+        while True:
+            msg = purple_air_consumer.poll(1.0)
+            if msg is None:
+                continue
+            if msg.error():
+                print("Consumer error: {}".format(msg.error()))
+                continue
+
+            print('Received message: {}'.format(msg.value().decode('utf-8')))
+
+        c.close()
+
         node = sys.argv[1]
         json_file_path = sys.argv[2]
         csv_file_path = sys.argv[3]
